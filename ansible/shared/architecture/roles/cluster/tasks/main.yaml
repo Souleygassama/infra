@@ -18,6 +18,12 @@
   include_role:
     - workers
 
+- name: Configurer les nœuds workers
+  hosts: Jenkins
+  become: yes
+  include_role:
+    - Jenkins
+
 # - name: Installer les dépendances sur tous les nœuds
 #   include_role:
 #     name: dependencies

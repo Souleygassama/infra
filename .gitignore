@@ -1,1 +1,9 @@
 .vagrant
+/.idea/
+/ansible/.vagrant/
+/ansible/.vagrant/machines
+/ansible/.vagrant/machines/ansible/
+/ansible/.vagrant/machines/ansible/virtualbox/
+/ansible/.vagrant/machines/master/
+/ansible/.vagrant/machines/worker1/
+/ansible/.vagrant/machines/worker2/

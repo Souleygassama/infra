@@ -1,8 +1,14 @@
 Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/focal64"
+  config.vm.network "private_network", type: "dhcp"
+  config.vm.synced_folder "./shared", "/home/vagrant/shared"
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = "2048"
+    vb.cpus = 2
+  end
 
   # Configuration de la VM Ansible
   config.vm.define "ansible" do |ansible|
-   ansible.vm.box = "ubuntu/focal64"
    ansible.vm.hostname = "ansible"
    ansible.vm.network "private_network", ip: "192.168.56.20"
    ansible.vm.provider "virtualbox" do |vb|
@@ -10,7 +16,6 @@ Vagrant.configure("2") do |config|
      vb.cpus = 1
    end
    ansible.vm.provision "shell", path: "bootstrap.sh"
-   ansible.vm.synced_folder "./shared", "/home/vagrant/shared"
 
    # Génération de la clé SSH si elle n'existe pas déjà
    ansible.vm.provision "shell", inline: <<-SHELL
@@ -38,47 +43,28 @@ Vagrant.configure("2") do |config|
    SHELL
  end
 
-
   # Configuration de la VM Master
   config.vm.define "master" do |master|
-    master.vm.box = "ubuntu/focal64"
     master.vm.hostname = "master"
     master.vm.network "private_network", ip: "192.168.56.10"
-    master.vm.provider "virtualbox" do |vb|
-      vb.memory = "2048"
-      vb.cpus = 2
-    end
-    master.vm.synced_folder "./shared", "/home/vagrant/shared"  # Ajout du dossier partagé
   end
 
   # Configuration de la VM Worker 1
   config.vm.define "worker1" do |worker1|
-    worker1.vm.box = "ubuntu/focal64"
     worker1.vm.hostname = "worker1"
     worker1.vm.network "private_network", ip: "192.168.56.11"
-    worker1.vm.provider "virtualbox" do |vb|
-      vb.memory = "2048"
-      vb.cpus = 2
-    end
-    worker1.vm.synced_folder "./shared", "/home/vagrant/shared"  # Ajout du dossier partagé
   end
 
   # Configuration de la VM Worker 2
   config.vm.define "worker2" do |worker2|
-    worker2.vm.box = "ubuntu/focal64"
     worker2.vm.hostname = "worker2"
     worker2.vm.network "private_network", ip: "192.168.56.12"
-    worker2.vm.provider "virtualbox" do |vb|
-      vb.memory = "2048"
-      vb.cpus = 2
-    end
-    worker2.vm.synced_folder "./shared", "/home/vagrant/shared"  # Ajout du dossier partagé
   end
 
- 
+  
 
   # Ajout de la clé publique Ansible aux autres VM (master, worker1, worker2)
-  ["master", "worker1", "worker2"].each do |node|
+  ["master", "worker1", "worker2", "jenkins"].each do |node|
     config.vm.define node do |vm|
       vm.vm.provision "shell", inline: <<-SHELL
         # Vérification que la clé publique existe dans le dossier partagé
@@ -92,6 +78,23 @@ Vagrant.configure("2") do |config|
         chmod 700 /home/vagrant/.ssh
         chown -R vagrant:vagrant /home/vagrant/.ssh
       SHELL
+    end
+  end
+
+   # Configuration de la VM Jenkins
+   config.vm.define "jenkins" do |jenkins|
+    jenkins.vm.hostname = "jenkins"
+    jenkins.vm.network "private_network", ip: "192.168.56.13"
+    # Provisionner Jenkins dans Docker
+    #jenkins.vm.provision "docker" do |d|
+    #  d.run "jenkins",
+     #   image: "jenkins/jenkins:lts", # LTS version of Jenkins
+    #    args: "-d -p 8080:8080 -p 50000:50000 --name jenkins"
+    #end
+    jenkins.vm.provision "ansible" do |ansible|
+      ansible.playbook = "/home/vagrant/shared/architecture/roles/jenkins/tasks/main.yaml"  # Path inside VM
+      ansible.inventory_path = "/home/vagrant/shared/architecture/inventory"  
+      ansible.limit = "jenkins"  
     end
   end
 end

@@ -17,6 +17,11 @@
   become: yes
   roles:
     - workers
+- name: Configurer le jenkins
+  hosts: jenkins
+  become: yes
+  roles:
+    - workers
 
 # - name: Configurer l'ensemble du cluster Kubernetes
 #   hosts: all
